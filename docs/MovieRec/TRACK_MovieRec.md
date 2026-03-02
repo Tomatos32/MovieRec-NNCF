@@ -33,4 +33,17 @@
 - [x] 数据集比例检查：`__len__` 返回的正负样本比例严格为 1:4。
 - [x] Future Data Leakage：采用基于时间戳排序的严格 Leave-One-Out 划分。
 
+### M3: 神经矩阵分解深度模型构建 (feat/m3-neumf-model)
+- [x] 分支创建与环境确认
+- [x] **NeuMF PyTorch 网络 (`model/neumf.py`)**
+  - [x] GMF / MLP 双通道独立 Embedding
+  - [x] MLP 塔式减半架构与 ReLU 非线性映射
+  - [x] GMF 点乘与 MLP 级联的联合全连接 Fusion Layer
+  - [x] 仅在 MLP 参数与 Embedding 上使用 Weight Decay 正则化引擎
+  - [x] 带梯度追踪的 Single Epoch 训练循环
+
+#### 测试与检查事项 (M3)
+- [x] 架构检查：维度映射一致，双 Embedding 均不发生共享。
+- [x] 优化与损失函数：BCELoss 输出介于 0-1 的二分类似然。仅对包含 mlp 关键字层加惩罚。
+
 ---
