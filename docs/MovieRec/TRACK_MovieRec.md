@@ -46,4 +46,16 @@
 - [x] 架构检查：维度映射一致，双 Embedding 均不发生共享。
 - [x] 优化与损失函数：BCELoss 输出介于 0-1 的二分类似然。仅对包含 mlp 关键字层加惩罚。
 
+### M4: FastAPI 推理边车微服务 (feat/m4-fastapi-sidecar)
+- [x] 分支创建与环境确认
+- [x] **推理边车构建 (`inference/main.py`)**
+  - [x] 生命周期事件载入：`startup` 缓存加载模型权重与 Eval 模式锁定 
+  - [x] REST 接口：`POST /api/predict`
+  - [x] Batch 批处理：对请求中的候选电影 ID 构建 Tensor 进行并行非梯度推断
+  - [x] 数据排序与响应：输出降序排列的 Top-K 电影得分数组
+
+#### 测试与检查事项 (M4)
+- [x] 无梯度计算检查：使用 `torch.no_grad()` 上下文防止 OOM 内存泄漏。
+- [x] 网络延迟保障：采用异步 ASGI (FastAPI + Uvicorn) 保障极低延迟响应。
+
 ---
