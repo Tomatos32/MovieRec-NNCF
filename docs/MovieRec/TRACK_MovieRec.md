@@ -72,4 +72,17 @@
 - [x] 非阻塞架构检查：使用了全栈响应式库 Reactor (`Mono`, `ReactiveRedisTemplate`) 处理 I/O 等待。
 - [x] 熔断机制：通过 `@CircuitBreaker` 完美剥离 FastAPI 网络不可靠风险，保底系统 100% 可用。
 
+### M6: 基于 Kafka 的异步闭环反馈机制 (feat/m6-kafka-feedback-loop)
+- [x] 分支创建与环境确认
+- [x] **API 接收接口 (`FeedbackController.java`)**
+  - [x] `POST /api/feedback` 进行埋点收集接收
+- [x] **事件总线系统构建 (`FeedbackPipeline.java`)**
+  - [x] 生产者 (Producer): 高并发无等待地写入统一消息队列 Topic。
+  - [x] 实时消费组 (`realtime-profiler`): 立敏捷更新 Redis 会话特征 (Session Profiling) 的数据漂移追踪。
+  - [x] 离线消费组 (`datalake-archiver`): 保障数据不丢失、不抢占内存情况下的全量 MySQL / 文件系统落盘沉淀。
+
+#### 测试与检查事项 (M6)
+- [x] 多组消费逻辑检查：配置了不同的 `groupId` 以实现同一 Topic （`user-interaction-events`）的发布订阅广播模式。
+- [x] JSON序列化：采用 `ObjectMapper` 序列化载荷。
+
 ---
