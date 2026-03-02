@@ -58,4 +58,18 @@
 - [x] 无梯度计算检查：使用 `torch.no_grad()` 上下文防止 OOM 内存泄漏。
 - [x] 网络延迟保障：采用异步 ASGI (FastAPI + Uvicorn) 保障极低延迟响应。
 
+### M5: Spring Boot 核心业务与双模路由 (feat/m5-springboot-routing)
+- [x] 分支创建与环境确认
+- [x] **Spring Boot Rest Controller (`RecommendationController.java`)**
+  - [x] 暴露出对外的 GET 端点
+- [x] **双模式动态调度核心业务逻辑 (`RecommendationService.java`)**
+  - [x] 按交互阈值判定模式: 冷启动 (Mode A) 与个性化 (Mode B)
+  - [x] WebClient 非阻塞异步调用 FastAPI 边车批量推断
+  - [x] 缓存探测：短效 Semantic Cache 和 ZSET 热门榜单
+  - [x] 高可用防御机制：150ms 严格 TimeLimiter 超时阻断，基于 Resilience4j 回退至 Mode A
+
+#### 测试与检查事项 (M5)
+- [x] 非阻塞架构检查：使用了全栈响应式库 Reactor (`Mono`, `ReactiveRedisTemplate`) 处理 I/O 等待。
+- [x] 熔断机制：通过 `@CircuitBreaker` 完美剥离 FastAPI 网络不可靠风险，保底系统 100% 可用。
+
 ---
