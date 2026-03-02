@@ -20,4 +20,17 @@
 - [x] 分区约束检查：在 MySQL 中，分区键必须是主键/联合主键的一部分。`interactions` 使用 `(id, timestamp)` 作为主键。
 - [x] 表引擎检查：均使用 InnoDB，以支持强事务控制与外键级别一致性（应用层控制）。
 
+### M2: 数据工程与离线特征管道 (feat/m2-data-engineering)
+- [x] 分支创建与环境确认
+- [x] **数据清洗与划分 (`data_pipeline/data_processor.py`)**
+  - [x] 1-5星隐式反馈二值化转换
+  - [x] Leave-One-Out 时间戳划分法
+- [x] **PyTorch Dataset (`data_pipeline/data_processor.py`)**
+  - [x] UserID / MovieID 连续化索引映射
+  - [x] 动态负采样生成器 (1:4 正负比例，均匀抽取)
+
+#### 测试与检查事项 (M2)
+- [x] 数据集比例检查：`__len__` 返回的正负样本比例严格为 1:4。
+- [x] Future Data Leakage：采用基于时间戳排序的严格 Leave-One-Out 划分。
+
 ---
