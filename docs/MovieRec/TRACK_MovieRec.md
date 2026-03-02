@@ -85,4 +85,17 @@
 - [x] 多组消费逻辑检查：配置了不同的 `groupId` 以实现同一 Topic （`user-interaction-events`）的发布订阅广播模式。
 - [x] JSON序列化：采用 `ObjectMapper` 序列化载荷。
 
+### M7: 现代化前端展示与交互 (feat/m7-frontend-ui)
+- [x] 分支创建与环境确认
+- [x] **UI 主视图构建 (`src/frontend/src/pages/HomePage.vue`)**
+  - [x] 基于 Vue 3 & Composition API 和 TS 的核心改写 (替代原有 React 组件)。
+  - [x] 基于 Tailwind CSS 的深色模式 (Dark Mode) 及网格卡片瀑布流/排布。
+  - [x] 后台骨架屏 (Skeleton Loading)。
+  - [x] 依据后端返回值(`code: cold_start`)触发微动效角标，明显区隔系统当前模式。
+  - [x] 建立防抖封装器 (`createDebounce`) 等高可维拦截器，避免对 Kafka 网关触发高频连击。
+
+#### 测试与检查事项 (M7)
+- [x] Vue 特性：`@click.stop` 修饰符极简实现阻止事件冒泡。
+- [x] 组件清除：移除了 `HomePage.jsx`。
+
 ---
