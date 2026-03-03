@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -23,17 +22,27 @@ public class RecommendationController {
     /**
      * 获取推荐流接口
      * GET /api/recommendations?userId={id}
+     * 返回格式: { code: 200, data: Movie[], mode: "personalized"|"cold-start", userId: xxx }
      */
     @GetMapping
     public Mono<ResponseEntity<Map<String, Object>>> getRecommendations(
             @RequestParam("userId") Long userId,
             @RequestParam(value = "topK", defaultValue = "10") int topK) {
-        
+
         return recommendationService.getRecommendationForUser(userId, topK)
-                .map(movies -> ResponseEntity.ok(Map.of(
+                .map(result -> ResponseEntity.ok(Map.of(
                         "code", 200,
                         "message", "Success",
-                        "data", movies
-                )));
+                        "data", result.data(),
+                        "mode", result.mode(),
+                        "userId", userId
+                )))
+                .onErrorResume(ex -> Mono.just(ResponseEntity.internalServerError().body(Map.of(
+                        "code", 500,
+                        "message", "推荐服务异常: " + ex.getMessage(),
+                        "data", java.util.Collections.emptyList(),
+                        "mode", "cold-start",
+                        "userId", userId
+                ))));
     }
 }
