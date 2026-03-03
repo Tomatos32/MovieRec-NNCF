@@ -1,0 +1,18 @@
+package com.movierec.repository;
+
+import com.movierec.model.Movie;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import reactor.core.publisher.Flux;
+
+import java.util.Collection;
+
+public interface MovieRepository extends R2dbcRepository<Movie, Long> {
+    Flux<Movie> findAllByIdIn(Collection<Long> ids);
+
+    /**
+     * 当 Redis 热门列表为空时，从数据库直接拉取电影作为降级兜底
+     */
+    @Query("SELECT * FROM movies ORDER BY id ASC LIMIT :limit")
+    Flux<Movie> findTopMovies(int limit);
+}
