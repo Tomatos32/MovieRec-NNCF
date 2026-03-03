@@ -70,10 +70,39 @@ MovieRec-NNCF/
      MODEL_PATH="../model/model.pth"
      ```
 
-5. **微服务集群启动**
-   - 基础设施一键拉起：`docker compose up -d` (Redis, Kafka, FastAPI 推理边车)
-   - 推理计算挂载端：`cd inference && uvicorn main:app --port 8000`（或通过 Docker 自动启动）
-   - 主业务路由应用：启动 Spring Boot 应用入口 `MovieRecApplication`。
-   - 交互呈现层：`cd src/frontend && npm install && npm run dev`
+## 部署与启动指引
+
+1. **基础设施一键拉起 (推荐)**
+   在根目录下执行，启动 Redis, Kafka 及推理服务：
+   ```bash
+   docker-compose up -d --build
+   ```
+
+2. **后端主业务启动 (Spring Boot)**
+   启动微服务核心调度中心 `MovieRecApplication`。该模块负责处理前端请求、调用端到端推理服务以及处理冷启动数据兜底逻辑。
+   - **IDE 方式**（推荐）：
+     在 IntelliJ IDEA 或 VS Code 中打开项目根目录，找到 `src/main/java/com/yourpackage/MovieRecApplication.java`（请根据实际包名确认路径），直接运行 `main` 方法。
+   - **命令行方式**：
+     在项目根目录下，使用 Maven Wrapper 运行：
+     ```bash
+     ./mvnw spring-boot:run
+     ```
+     或者先打包再运行：
+     ```bash
+     ./mvnw clean package -DskipTests
+     java -jar target/movie-rec-nncf-0.0.1-SNAPSHOT.jar
+     ```
+   - **关键检查点**：
+     - 确保控制台输出 `Started MovieRecApplication` 且未报告 Redis/Kafka 连接异常。
+     - 默认监听端口通常为 `8080` (可通过 `application.yml` 修改)。
+
+3. **前端呈现层启动**
+   ```bash
+   cd src/frontend
+   npm install
+   npm run dev
+   ```
+   访问地址：`http://localhost:5173`
+
 
 更多任务及交付点梳理参见 [TODO_MovieRec](./docs/MovieRec/TODO_MovieRec.md)。

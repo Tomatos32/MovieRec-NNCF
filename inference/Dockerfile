@@ -4,7 +4,9 @@ WORKDIR /app
 
 # 安装依赖
 COPY inference/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN export HTTP_PROXY="http://host.docker.internal:7897" && \
+    export HTTPS_PROXY="http://host.docker.internal:7897" && \
+    pip install -i https://pypi.tuna.tsinghua.edu.cn/simple/ -r requirements.txt
 
 # 复制推理代码和模型定义
 COPY inference/main.py ./inference/
