@@ -52,16 +52,16 @@ def main():
     )
 
     # RTX 3060 Laptop (6GB VRAM) 下的合理配置
-    # Embedding 层较大 (200K users * 64 * 4 embeddings)，batch_size 适当控制
+    # 注意: ML-32M 的负采样字典在内存中很大，多 worker 会导致内存翻倍 MemoryError
+    # 因此 num_workers=0 使用主进程加载，GPU 计算速度足以覆盖
     use_cuda = device.type == "cuda"
     batch_size = 4096
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=4 if use_cuda else 0,  # GPU 模式下开启多进程预取
-        pin_memory=use_cuda,               # 仅在有 GPU 时启用页锁定内存
-        persistent_workers=True if use_cuda else False,
+        num_workers=0,
+        pin_memory=use_cuda,
     )
 
     # ===== 4. 初始化模型 =====

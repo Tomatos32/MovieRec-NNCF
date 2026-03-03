@@ -67,3 +67,9 @@ MovieRec-NNCF/
    - 交互呈现层：`cd src/frontend && npm install && npm run dev`
 
 更多任务及交付点梳理参见 [TODO_MovieRec](./docs/MovieRec/TODO_MovieRec.md)。
+请记下以下环境参数，用于后续推理边车的环境变量配置：
+=========================================
+export NUM_USERS=200948
+export NUM_MOVIES=84432
+export MODEL_PATH="../model/model.pth"
+=========================================
