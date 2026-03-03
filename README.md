@@ -48,7 +48,20 @@ MovieRec-NNCF/
 2. **数据库与流组件服务拉起**
    - 请按本地环境确保实例开放（MySQL, Redis, Kafka Broker），并载入 `sql/schema.sql` 结构映射。
 
-3. **微服务集群启动**
+3. **数据准备与前置模型训练 (ML-32M)**
+   - 下载并解压 MovieLens 32M 数据集，将解压后的 `ratings.csv` 放置到预定路径（例如 `data/ratings.csv`）。详细参考 `ml-32m/ml-32m-README.md`。
+   - 配置环境：安装 Python 3.8+ (CUDA 环境)，通过 `pip install -r inference/requirements.txt` 加载推理引擎所需依赖。
+   - 运行数据预处理管道（`data_processor.py`），对 `ratings.csv` 执行：
+     - 用户/电影 ID 离散映射（从 0 开始连续化）
+     - 基于时间序列的严格 Leave-One-Out 划分法则切分训练/验证/测试集。
+     - 生成隐式反馈的 PyTorch Dataset，并且按 1:4 的正负比例进行 On-the-fly (OOT) 动态全集负采样。
+   - 启动 NeuMF 模型训练（`model/neumf.py` 内部包含了网络结构和单轮训练逻辑，需要建立专门的 main_train 脚本载入 DataLoader 运行）：
+     - 训练参数建议：`latent_dim=64`，批次大小根据 GPU 显存确定（如 1024/2048），`lr=1e-3`。
+     - **优化器约束**：我们采用定制的 Adam 优化器，仅对 MLP 通道的参数引入 `weight_decay=1e-4` (L2正则化)，而在 GMF 侧关闭衰减补偿。
+     - 训练完成后将权重持久化保存为 `model/model.pth`，并记下训练输出的 `num_users` 和 `num_movies`。
+   - 返回端到端模型配置，设置系统变量如：`export MODEL_PATH="../model/model.pth"` 等，以供推理服务注入。
+
+5. **微服务集群启动**
    - 推理计算挂载端：`cd inference && uvicorn main:app --port 8000`
    - 主业务路由应用：启动 Spring Boot 应用入口 `MovieRecApplication`。
    - 交互呈现层：`cd src/frontend && npm install && npm run dev`

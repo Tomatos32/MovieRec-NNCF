@@ -1,0 +1,65 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: movierec-gateway
+  
+  # MySQL Configuration
+  datasource:
+    url: jdbc:mysql://localhost:3306/MovieRec?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # Redis Configuration (Reactive WebFlux support)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
+      timeout: 5000ms
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      retries: 3
+    consumer:
+      group-id: realtime-profiler
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+
+# Resilience4j Circuit Breaker and TimeLimiter (FastAPI Isolation)
+resilience4j.circuitbreaker:
+  instances:
+    fastApiInference:
+      registerHealthIndicator: true
+      slidingWindowSize: 10
+      minimumNumberOfCalls: 5
+      permittedNumberOfCallsInHalfOpenState: 3
+      waitDurationInOpenState: 5s
+      failureRateThreshold: 50
+
+resilience4j.timelimiter:
+  instances:
+    fastApiInference:
+      timeoutDuration: 150ms
+      cancelRunningFuture: true
+
+# FastAPI Sidecar URL
+movierec:
+  inference:
+    url: http://localhost:8000
+    endpoints:
+      predict: /api/predict

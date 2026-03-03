@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# PyTorch 模型权重
+model/*.pth
+model/*.pt
+
+# 数据集 (ML-32M 太大, 不入库)
+data/
+ml-32m/
+
+# 环境与配置
+.env
+.env.*
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# Agent / AI 工具
+.agents/
+.gemini/
+.superdesign/
+
+# Java 编译产物
+target/
+*.class
+
+# Node
+node_modules/

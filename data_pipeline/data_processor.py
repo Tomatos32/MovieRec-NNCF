@@ -17,48 +17,73 @@ class MovieLensProcessor:
         self.all_movies_list = []
         
     def process(self):
-        # 1. 兼容加载逻辑 (支持 ML-1M 的 :: 分隔符与标准 csv)
+        # 1. 内存优化的高效加载逻辑 (支持 ML-1M 的 :: 分隔符与标准 csv)
         if not os.path.exists(self.ratings_path):
-            # To allow import without local file
             print(f"Warning: Data file {self.ratings_path} not found. Running in dry-run mode.")
             return None, None, None
 
+        print("[Feature Pipeline] Loading dataset via Pandas with memory optimization...")
+        
+        # 预设明确的内存类型以防止 Pandas 动态推断导致 OOM (Out Of Memory)
+        dtype_spec = {
+            'user_id': np.int32,     
+            'movie_id': np.int32,    
+            'rating': np.float32,    
+            'timestamp': np.int32    
+        }
+        
         with open(self.ratings_path, 'r') as f:
             first_line = f.readline()
             
         if '::' in first_line:
             df = pd.read_csv(self.ratings_path, sep='::', engine='python', 
-                             names=['user_id', 'movie_id', 'rating', 'timestamp'])
+                             names=['user_id', 'movie_id', 'rating', 'timestamp'],
+                             dtype=dtype_spec)
         else:
             df = pd.read_csv(self.ratings_path, names=['user_id', 'movie_id', 'rating', 'timestamp'], 
-                             engine='python', sep=',')
+                             engine='c', sep=',', header=0, 
+                             dtype=dtype_spec)
         
-        # 2. 隐式反馈二值化 (全部视为有交互的 1 正样本)
-        df['implicit_rating'] = 1.0  
+        # 释放不再需要的评分列以节省内存
+        df.drop(columns=['rating'], inplace=True)
         
-        # 3. 特征映射: 离散 ID 转为从 0 开始的连续整数 (严格适配 PyTorch Embedding)
+        # 2. 隐式反馈二值化
+        df['implicit_rating'] = np.ones(len(df), dtype=np.float32)
+        
+        # 3. 特征映射
+        print("[Feature Pipeline] Mapping IDs...")
         user_ids = df['user_id'].unique()
         movie_ids = df['movie_id'].unique()
         self.user_mapping = {uid: idx for idx, uid in enumerate(user_ids)}
         self.movie_mapping = {mid: idx for idx, mid in enumerate(movie_ids)}
         
-        df['user_idx'] = df['user_id'].map(self.user_mapping)
-        df['movie_idx'] = df['movie_id'].map(self.movie_mapping)
+        df['user_idx'] = df['user_id'].map(self.user_mapping).astype(np.int32)
+        df['movie_idx'] = df['movie_id'].map(self.movie_mapping).astype(np.int32)
+        
+        # 清除原始ID列释放内存
+        df.drop(columns=['user_id', 'movie_id'], inplace=True)
         
         self.all_movies_list = list(self.movie_mapping.values())
         
-        # 构建负采样查找字典
-        for user, group in df.groupby('user_idx'):
-            self.user_interacted_movies[user] = set(group['movie_idx'].tolist())
+        # 优化构建负采样查找字典
+        print("[Feature Pipeline] Building negative sampling dictionary...")
+        self.user_interacted_movies = df.groupby('user_idx')['movie_idx'].apply(set).to_dict()
             
-        # 4. 留一法划分验证与测试 (严格按时间戳排序，杜绝未来数据穿越 Leakage)
-        df = df.sort_values(by=['user_idx', 'timestamp'])
-        df['rank_latest'] = df.groupby('user_idx')['timestamp'].rank(method='first', ascending=False)
+        # 4. 留一法划分验证与测试
+        print("[Feature Pipeline] Sorting and splitting data temporally (Leave-One-Out)...")
+        df.sort_values(by=['user_idx', 'timestamp'], inplace=True)
+        df['rank_latest'] = df.groupby('user_idx')['timestamp'].rank(method='first', ascending=False).astype(np.int16)
         
-        # 约定：最后一次交互为 Test，倒数第二次为 Valid，其余为 Train
+        # 释放 timestamp
+        df.drop(columns=['timestamp'], inplace=True)
+        
+        # 约定最后交互
         train_df = df[df['rank_latest'] > 2].copy()
         valid_df = df[df['rank_latest'] == 2].copy()
         test_df = df[df['rank_latest'] == 1].copy()
+        
+        # 彻底清理不再使用的原始大表
+        del df 
         
         print(f"[Feature Pipeline] Mapped {len(user_ids)} Users, {len(movie_ids)} Movies.")
         print(f"[Feature Pipeline] Plit: Train {len(train_df)}, Valid {len(valid_df)}, Test {len(test_df)}")
