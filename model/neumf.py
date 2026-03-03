@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 class NeuMF(nn.Module):
     """
@@ -117,11 +118,14 @@ def train_one_epoch(model: nn.Module, data_loader: DataLoader,
     model.train()
     total_loss = 0.0
     
-    for batch_idx, (users, movies, labels) in enumerate(data_loader):
+    progress = tqdm(enumerate(data_loader), total=len(data_loader), 
+                    desc="  Training", unit="batch", ncols=100)
+    
+    for batch_idx, (users, movies, labels) in progress:
         # 1. 数据转移至加速器 (GPU/CPU)
-        users = users.to(device)
-        movies = movies.to(device)
-        labels = labels.to(device)
+        users = users.to(device, non_blocking=True)
+        movies = movies.to(device, non_blocking=True)
+        labels = labels.to(device, non_blocking=True)
         
         # 2. 前向传播
         predictions = model(users, movies)
@@ -135,6 +139,10 @@ def train_one_epoch(model: nn.Module, data_loader: DataLoader,
         optimizer.step()
         
         total_loss += loss.item()
+        
+        # 实时更新进度条的 loss 显示
+        if batch_idx % 50 == 0:
+            progress.set_postfix(loss=f"{loss.item():.4f}")
         
     avg_loss = total_loss / len(data_loader)
     return avg_loss
