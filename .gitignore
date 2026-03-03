@@ -20,6 +20,7 @@ ml-32m/
 .env
 .env.*
 *.env
+!.env.example
 
 # IDE
 .idea/
