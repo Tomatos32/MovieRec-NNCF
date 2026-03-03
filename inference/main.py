@@ -34,8 +34,8 @@ async def startup_event():
     
     # 模拟从环境变量或相对路径加载 .pth
     model_path = os.getenv("MODEL_PATH", "../model/model.pth")
-    num_users = int(os.getenv("NUM_USERS", 6040))
-    num_movies = int(os.getenv("NUM_MOVIES", 3952))
+    num_users = int(os.getenv("NUM_USERS", 200948))
+    num_movies = int(os.getenv("NUM_MOVIES", 84432))
     
     # 初始化模型结构
     model = NeuMF(num_users=num_users, num_movies=num_movies)

@@ -61,15 +61,19 @@ MovieRec-NNCF/
      - 训练完成后将权重持久化保存为 `model/model.pth`，并记下训练输出的 `num_users` 和 `num_movies`。
    - 返回端到端模型配置，设置系统变量如：`export MODEL_PATH="../model/model.pth"` 等，以供推理服务注入。
 
+4. **环境变量配置**
+   - 复制 `.env.example` 为 `.env` 并填入实际值
+   - 训练产出的关键参数 (已写入 `.env.example`)：
+     ```bash
+     NUM_USERS=200948
+     NUM_MOVIES=84432
+     MODEL_PATH="../model/model.pth"
+     ```
+
 5. **微服务集群启动**
-   - 推理计算挂载端：`cd inference && uvicorn main:app --port 8000`
+   - 基础设施一键拉起：`docker compose up -d` (Redis, Kafka, FastAPI 推理边车)
+   - 推理计算挂载端：`cd inference && uvicorn main:app --port 8000`（或通过 Docker 自动启动）
    - 主业务路由应用：启动 Spring Boot 应用入口 `MovieRecApplication`。
    - 交互呈现层：`cd src/frontend && npm install && npm run dev`
 
 更多任务及交付点梳理参见 [TODO_MovieRec](./docs/MovieRec/TODO_MovieRec.md)。
-请记下以下环境参数，用于后续推理边车的环境变量配置：
-=========================================
-export NUM_USERS=200948
-export NUM_MOVIES=84432
-export MODEL_PATH="../model/model.pth"
-=========================================

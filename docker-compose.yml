@@ -1,6 +1,8 @@
-version: '3.8'
 
 services:
+  # ============================================================
+  # Redis 缓存服务 (热门排行榜 / 会话特征 / 语义缓存)
+  # ============================================================
   redis:
     image: redis:7.0-alpine
     container_name: movierec-redis
@@ -15,6 +17,9 @@ services:
       timeout: 5s
       retries: 5
 
+  # ============================================================
+  # Zookeeper (Kafka 依赖)
+  # ============================================================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     container_name: movierec-zookeeper
@@ -24,6 +29,9 @@ services:
     ports:
       - "2181:2181"
 
+  # ============================================================
+  # Kafka 事件总线 (user-interaction-events Topic)
+  # ============================================================
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: movierec-kafka
@@ -38,6 +46,41 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
+  # ============================================================
+  # FastAPI 推理边车 (NeuMF Sidecar)
+  # 若宿主机装有 NVIDIA Container Toolkit, 则自动利用 GPU 推理
+  # 若未安装, 请注释 deploy 段落, 将自动降级为 CPU 推理
+  # ============================================================
+  inference-sidecar:
+    build:
+      context: .
+      dockerfile: inference/Dockerfile
+    container_name: movierec-inference
+    ports:
+      - "8000:8000"
+    environment:
+      - NUM_USERS=${NUM_USERS:-200948}
+      - NUM_MOVIES=${NUM_MOVIES:-84432}
+      - MODEL_PATH=/app/model/model.pth
+    volumes:
+      - ./model:/app/model:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================
+  # 注意: MySQL 使用宿主机本地安装的实例, 不在容器化范围内
+  # Spring Boot 通过 application.yml 中 localhost:3306 直连本地 MySQL
+  # ============================================================
+
 volumes:
-  mysql-data:
   redis-data:

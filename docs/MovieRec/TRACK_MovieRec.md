@@ -98,4 +98,32 @@
 - [x] Vue 特性：`@click.stop` 修饰符极简实现阻止事件冒泡。
 - [x] 组件清除：移除了 `HomePage.jsx`。
 
+### M8: GPU 训练迁移与内存优化 (feat/gpu-training)
+- [x] **PyTorch CUDA 迁移**
+  - [x] 卸载 CPU 版 torch，安装 `torch 2.10.0+cu126` (RTX 3060 Laptop GPU, 6GB VRAM)
+  - [x] `main_train.py` 自动检测设备，条件化 `pin_memory` / `non_blocking`
+  - [x] tqdm 实时进度监控与 epoch 耗时计量
+- [x] **数据管道内存优化 (`data_processor.py`)**
+  - [x] 调整操作顺序：先做 Leave-One-Out 时间切分释放大 DataFrame，再构建负采样字典
+  - [x] 用 numpy 排序数组替代 Python set，内存占用从 ~1.6GB 降至 ~128MB
+  - [x] `np.searchsorted` O(log n) 命中检测替代 `set.__contains__`
+  - [x] 显式 `gc.collect()` 回收中间对象
+- [x] **训练完成**
+  - [x] ML-32M (3200万条) 3 Epoch 训练完毕，模型权重 `model.pth` 已持久化
+  - [x] 环境参数: NUM_USERS=200948, NUM_MOVIES=84432
+
+#### 测试与检查事项 (M8)
+- [x] GPU 加速验证: CUDA 12.6 + RTX 3060 成功检测并启用。
+- [x] 内存管控: 16GB RAM 环境下 ML-32M 数据处理无 OOM。
+- [x] 模型权重: `model.pth` 可被 FastAPI 边车正常加载。
+
+### M9: Docker 编排与环境变量治理
+- [x] **docker-compose.yml 补全**
+  - [x] Redis / Kafka / Zookeeper 基础设施服务
+  - [x] FastAPI 推理边车 (含 nvidia-runtime GPU 支持 + Dockerfile)
+  - [x] MySQL 使用宿主机本地实例，不做容器化
+- [x] **环境变量治理**
+  - [x] 创建 `.env.example` 模板文件
+  - [x] 推理边车默认参数更新为 ML-32M 训练结果 (200948/84432)
+
 ---
