@@ -36,6 +36,7 @@ Thumbs.db
 .agents/
 .gemini/
 .superdesign/
+docs
 
 # Java 编译产物
 target/
