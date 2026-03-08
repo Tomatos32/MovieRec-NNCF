@@ -5,9 +5,12 @@
       <img
         :src="movie.posterUrl || fallbackPoster"
         :alt="movie.title"
+        width="300"
+        height="450"
         loading="lazy"
         @error="onImgError"
       />
+      <div class="poster-overlay"></div>
       <!-- AI 推荐匹配度角标 -->
       <span class="match-badge">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -27,6 +30,7 @@
         <button
           class="btn-dislike"
           title="不感兴趣"
+          aria-label="不感兴趣"
           @click.stop="handleDislike"
           :disabled="isDislikeDisabled"
         >
@@ -90,19 +94,35 @@ const onImgError = (e: Event) => {
 
 <style scoped>
 .movie-card {
+  position: relative;
   background: var(--color-bg-card);
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-card);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
   cursor: pointer;
+}
+
+.movie-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px transparent;
+  transition: box-shadow var(--transition-normal);
+  pointer-events: none;
+  z-index: 10;
 }
 
 .movie-card:hover {
   transform: translateY(-6px);
-  box-shadow: var(--shadow-card-hover);
-  border-color: rgba(124, 92, 252, 0.2);
+  box-shadow: var(--shadow-card-hover), var(--shadow-glow);
+  border-color: transparent;
+}
+
+.movie-card:hover::before {
+  box-shadow: inset 0 0 0 1px var(--color-accent-light);
 }
 
 /* 海报 */
@@ -118,7 +138,17 @@ const onImgError = (e: Event) => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform var(--transition-normal);
+  transition: transform var(--transition-slow);
+}
+
+.poster-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background: linear-gradient(to top, var(--color-bg-card) 0%, transparent 100%);
+  z-index: 1;
 }
 
 .movie-card:hover .card-poster img {
@@ -141,11 +171,22 @@ const onImgError = (e: Event) => {
   backdrop-filter: blur(8px);
   border-radius: 20px;
   letter-spacing: 0.02em;
+  z-index: 2;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+  0% { box-shadow: 0 0 0 0 rgba(124, 92, 252, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(124, 92, 252, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(124, 92, 252, 0); }
 }
 
 /* 信息区 */
 .card-body {
-  padding: 14px 16px 16px;
+  position: relative;
+  z-index: 2;
+  padding: 10px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -186,7 +227,7 @@ const onImgError = (e: Event) => {
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
 .btn-dislike:hover:not(:disabled) {
@@ -206,7 +247,7 @@ const onImgError = (e: Event) => {
   color: var(--color-accent-light);
   padding: 6px 12px;
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .btn-detail:hover {

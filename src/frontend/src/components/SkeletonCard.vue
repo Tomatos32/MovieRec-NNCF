@@ -19,6 +19,7 @@
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
 }
 
 .skeleton-poster {
@@ -69,10 +70,19 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.04) 50%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.06) 60%,
     transparent 100%
   );
-  animation: shimmer 1.8s infinite;
+  animation: shimmer 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after {
+    animation: none;
+    background: rgba(255, 255, 255, 0.02);
+  }
 }
 
 @keyframes shimmer {
